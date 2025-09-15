@@ -1,0 +1,25 @@
+cookie:
+  expiry_days: 30
+  key: CapstoneTestingKey
+  name: TaskMinerTesting
+credentials:
+  usernames:
+    test1:
+      email: test1@email.com
+      failed_login_attempts: 0 # Will be managed automatically
+      first_name: Test
+      last_name: One
+      logged_in: False # Will be managed automatically
+      password: abc # Will be hashed automatically
+    test2:
+      email: test2@gmail.com
+      failed_login_attempts: 0 # Will be managed automatically
+      first_name: Test
+      last_name: Two
+      logged_in: False # Will be managed automatically
+      password: def # Will be hashed automatically
+    tli@researchlab.com:  # <-- The username IS the email
+      email:  tli@researchlab.com
+      name: Tammy Li
+      password: abc
+

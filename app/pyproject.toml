@@ -1,0 +1,57 @@
+[tool.poetry]
+name = "task-miner-app"
+version = "0.1.0"
+description = "An AI-powered application to extract tasks from emails."
+authors = ["UCB_MIDS_Task_Miner"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.14"
+
+# --- Frontend Dependencies ---
+streamlit = ">=1.45.1,<2.0.0"
+streamlit-authenticator = ">=0.4.2,<0.5.0"
+pyyaml = "^6.0.1" # Required by the authenticator
+pandas = "^2.2.0" # For displaying dataframes
+
+# --- AWS SDK ---
+boto3 = "^1.34.0"
+
+# --- Vector & AI Service Clients ---
+qdrant-client = "^1.14.2"
+pinecone-client = "^4.1.0"
+openai = "^1.90.0" 
+# cohere = "^5.5.0" # Add this if you decide to use Cohere
+
+# --- RAG & LLM Orchestration ---
+langchain = "^0.3.25"
+langchain-community = "^0.3.25"
+langchain-text-splitters = "^0.3.8"
+langchain-openai = "^0.3.24"
+tiktoken = "^0.9.0"
+#sentence-transformers = "^4.1.0" # For local embedding experiments
+
+# --- Utility ---
+python-dotenv = "^1.0.0" # For loading secrets from the .env file
+ipykernel = "^6.29.5" # For running in notebooks
+scikit-learn = "^1.7.1"
+nltk = "^3.9.1"
+ragas = "^0.3.0"
+datasets = "^4.0.0"
+langchain-anthropic = "^0.3.17"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+matplotlib = "^3.10.5"
+jupyterlab = "^4.4.5"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:botocore.*",
+    "ignore:datetime.datetime.utcnow.*:DeprecationWarning"
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

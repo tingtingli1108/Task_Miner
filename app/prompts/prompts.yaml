@@ -1,0 +1,518 @@
+# ----Task Detection Prompts----
+task_detection:
+
+  v0.1:
+    author: TaskMiner Team
+    created_date: '2025-06-30'
+    # description: Original prompt for task detection
+    # expected_improvements:
+    system_message: |
+      Determine whether the following email contains a  task for {user_name} (email: {user_id}).
+
+      Analyze the email below and respond with "TRUE" or "FALSE" only. 
+      Do not provide any other text or explanation.
+    user_message: |
+      Email:
+      {email_contents}
+    version: v0.1
+# --------------------------------------------------
+
+  v0.2:
+    author: TaskMiner Team
+    created_date: '2025-06-30'
+    # description: Original prompt for task detection
+    # expected_improvements:
+    system_message: |
+      You are an expert assistant specializing in productivity and task identification from emails. 
+      Your goal is to determine if the following email contains a  task for {user_name} (email: {user_id}).
+
+      A task is defined as anything that the user needs to reply or take action on. 
+      It can be a request, a reminder, or any actionable item that requires the user's attention.
+
+      Analyze the email below and respond with "TRUE" or "FALSE" only. 
+      Do not provide any other text or explanation.
+    user_message: |
+      Email:
+      {email_contents}
+    version: v0.2
+# --------------------------------------------------
+
+  production_baseline:
+    author: TaskMiner Team
+    created_date: '2025-07-10'
+    description: Current production prompt for task detection
+    # expected_improvements: Baseline performance
+    system_message: |
+      You are an expert assistant. Your goal is to determine if the
+      following email contains a task for {user_name} (email: {user_id}). A task
+      is defined as anything that the user needs to reply or take action on. It can
+      be a request, a reminder, or any actionable item that requires the user's attention.
+      Respond with only the word 'TRUE' or 'FALSE'.
+    user_message: |
+      Based on the following email, does it contain any actionable tasks
+      assigned to {user_name} (email: {user_id})?
+
+      **Special Rule**: If the sender's email address in the 'From:' field is the
+      same as the user's email ({user_id}), treat the content as a personal reminder
+      and consider it a task.
+
+      Email:
+      {email_contents}
+    version: v1.0
+# --------------------------------------------------
+
+  few_shot_detection:
+    author: David
+    created_date: '2025-07-24'
+    description: Current production prompt for task detection
+    expected_improvements: |
+      - Improved accuracy in identifying tasks
+      - Better handling of ambiguous emails similar to the examples provided
+    system_message: |
+      You are an expert assistant. Your goal is to determine if the
+      following email contains a task for {user_name} (email: {user_id}). A task
+      is defined as anything that the user needs to reply or take action on. It can
+      be a request, a reminder, or any actionable item that requires the user's attention.
+      Respond with only the word 'TRUE' or 'FALSE'.
+
+      Here are some examples of how to extract tasks.
+      --------------------------------------------------
+      Example 1: Clear Task with Date
+
+      Email:
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: Report
+      body: Hi {user_name}, could you send me the Q3 report by Friday?
+
+      Response:
+      TRUE
+      --------------------------------------------------
+      Example 2: Self-Sent Reminder (No Date)
+
+      Email:
+      from: {user_name} <{user_id}>
+      to: {user_name} <{user_id}>
+      subject: Reminder
+      body: Don't forget to submit the expense report for the conference.
+
+      Response:
+      TRUE
+      --------------------------------------------------
+      Example 3: Multiple Distinct Tasks
+
+      Email:
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: Weekly Update
+      body:
+        Hey {user_name}, can you please send me the weekly update before before our call with Acme Corp.? 
+        Also, don't forget to book the conference room for Friday's meeting.
+
+      Response:
+      TRUE
+      --------------------------------------------------
+      Example 4: No task present
+
+      Email:
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: Office Services Update
+      body: Please note that on Monday May 26th, we will have Dynamic Electrical conducting backup power testing in the building.
+
+      Response:
+      FALSE
+      --------------------------------------------------
+      Example 5: No task present
+
+      Email:
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: CSV Upload Success
+      body: The CSV upload to sharepointwas successful.
+
+      Response:
+      FALSE
+      --------------------------------------------------
+      Example 6: No task present
+
+      Email:
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>; Sai.Saffron@example.com
+      subject: Team Meeting
+      body: We have a team meeting on Friday at 10am. Please make sure to bring your laptop.
+
+      Response:
+      FALSE
+      --------------------------------------------------
+      # End examples
+      --------------------------------------------------
+
+    user_message: |
+      Based on the following email, does it contain any actionable tasks
+      assigned to {user_name} (email: {user_id})?
+
+      **Special Rule**: If the sender's email address in the 'From:' field is the
+      same as the user's email ({user_id}), treat the content as a personal reminder
+      and consider it a task.
+
+      Email:
+      {email_contents}
+    version: v1.1
+# --------------------------------------------------
+
+
+# ----Task Extraction Prompts----
+task_extraction:
+  v0.1:
+    author: TaskMiner Team
+    created_date: '2025-07-10'
+    description: Original prompt for task extraction
+    # expected_improvements: original prompt
+    system_message: |
+      You are an expert assistant that extracts tasks from email threads
+      for a specific user. Always return the output as a single, clean JSON array
+      of task objects.
+
+      Each task has the following fields:
+      {{
+          "task_title": string,
+          "description": string,
+          "due_date": date,
+          "requestor": string,
+          "completion_status": integer (1 if the task is mentioned as complete, 0 if it is not)
+      }}
+      
+      Instructions:
+      - The task owner must be '{user_name}' or '{user_id}'.
+      - The 'requestor' is the person who asked for the task to be done.
+      - Always return the output as a JSON array (list) of tasks.
+ 
+    user_message: |
+      Extract all actionable tasks for user '{user_name}' (email: {user_id}) 
+      from the "Primary Email" below. 
+      
+      --------------------------------------------------
+      ### Related Conversation History:
+      {retrieved_context}
+      --------------------------------------------------
+      ### Primary Email to Analyze:
+      {email_contents}
+      --------------------------------------------------
+      ### JSON Output:
+    version: v0.1
+# --------------------------------------------------
+
+  production_baseline:
+    author: TaskMiner Team
+    created_date: '2025-07-10'
+    description: Current production prompt for task extraction
+    # expected_improvements: baseline performance
+    system_message: |
+      You are an expert assistant that extracts tasks from email threads
+      for a specific user. Always return the output as a single, clean JSON array
+      of task objects.
+
+      Each task has the following fields:
+      {{
+          "task_title": string,
+          "description": string,
+          "due_date": date,
+          "requestor": string,
+          "completion_status": integer (1 if the task is mentioned as complete, 0 if it is not)
+      }}
+      
+      Instructions:
+      - The task owner must be '{user_name}' or '{user_id}'.
+      - The 'requestor' is the person who asked for the task to be done.
+      - Always return the output as a JSON array (list) of tasks.
+      - **IMPORTANT**: For the 'due_date', if a specific date is mentioned (e.g., 'by Friday', 'June 11th'), convert it to 'YYYY-MM-DD' format. If the deadline is relative to an event (e.g., 'before the meeting'), use that text directly. If no deadline is mentioned, return null.
+      - **Special Rule**: If the sender's email address in the 'From:' field is the same as the user's email ({user_id}), treat the content as a personal reminder. In this case, the 'requestor' and 'task_owner' are both '{user_name}'.
+
+    user_message: |
+      Extract all actionable tasks for user '{user_name}' (email: {user_id}) 
+      from the "Primary Email" below. Use the "Related Conversation History" 
+      for additional context.
+      
+      --------------------------------------------------
+      ### Related Conversation History:
+      {retrieved_context}
+      --------------------------------------------------
+      ### Primary Email to Analyze:
+      {email_contents}
+      --------------------------------------------------
+      ### JSON Output:
+    version: v1.0
+# --------------------------------------------------
+  
+  concise_extraction:
+    author: LLM suggested
+    created_date: '2025-07-24'
+    description: More concise prompt focusing on essential information
+    expected_improvements: |
+      - Faster processing
+      - Less verboser
+      - More focused output
+    system_message: |
+      Extract actionable tasks from emails. Return valid JSON array only. JSON Format:
+      [{{
+        "task_title": "string", 
+        "description": "string", 
+        "due_date": "YYYY-MM-DD or null", 
+        "requestor": "string", 
+        "completion_status": 0 or 1
+      }}]
+
+    user_message: |
+      Extract tasks for {user_name} ({user_id}) from the email below.
+      --------------------------------------------------
+      Context: {retrieved_context}
+      --------------------------------------------------
+      Email: {email_contents}
+      --------------------------------------------------
+      JSON:
+    version: v1.0
+# --------------------------------------------------
+
+  assertive_extraction:
+    author: TaskMiner Team
+    created_date: '2025-07-24'
+    description: An assertive prompt that informs the model a task is believed to exist, and teaches it to distinguish between multiple steps and multiple tasks.
+    expected_improvements:
+    - Improved accuracy in task extraction
+    - Better handling of complex emails with multiple action items.
+    - Reduced instances of returning an empty list when a task is present.
+    system_message: You are an expert assistant that extracts tasks from email threads for a specific user. A preliminary check has already determined that the following email likely contains a task. Your job is to extract it. Always return the output as a single, clean JSON array
+      of task objects.
+
+    user_message: |
+      Extract all actionable tasks for user {user_name} (email:{user_id}) from the "Primary Email" below. 
+      Use the "Related Conversation" for additional context.
+      
+      Each task has the following fields:
+      {{
+          "task_title": string,
+          "description": string,
+          "due_date": string,
+          "requestor": string,
+          "completion_status": integer (1 if the task is mentioned as complete, 0 if it is not)
+      }}
+
+      **Instructions:**
+      - A task is believed to be present. Your goal is to extract it.
+      - the requestor and the owner can be the same person such as self reminders or self tasks.
+      - **Combine multiple related steps about a single deliverable into one task. Create separate tasks only for distinct, independent action items.**
+      - **IMPORTANT**: For the 'due_date', if a specific date is mentioned (e.g., "by Friday", "June 11th"), convert it to "YYYY-MM-DD" format. If the deadline is relative to an event (e.g., "before the meeting"), use that text directly. If no deadline is mentioned, return null.
+      - If, after careful analysis, you are absolutely certain there is no task for this user, you may return an empty list: [].
+      - Use information from Related Conversation if they provide relevant context, or ignore them if they do not provide relevant context.
+      - Always return the output as a JSON array (list) of tasks.
+
+      ### Primary Email to Analyze:
+      {email_contents}
+
+      ### Related Conversation 
+      {retrieved_context}
+
+      ### JSON:
+    version: v1.0
+# --------------------------------------------------
+
+  few_shots_extraction:
+    author: TaskMiner Team
+    created_date: '2025-07-24'
+    description: add a few-shot examples to assertive_extraction prompts
+    expected_improvements:
+    - Improved accuracy in task extraction with few-shot examples
+    system_message: |
+      You are an expert assistant that extracts tasks from email threads for a specific user. 
+      A preliminary check has already determined that the following email likely contains a task. 
+      Your job is to extract it. Always return the output as a single, clean JSON array
+      of task objects.
+
+      Extract all actionable tasks for user {user_name} (email:{user_id}) from the "Primary Email" below. 
+      Use the "Related Conversation" for additional context.
+      
+      Each task has the following fields:
+      JSON:
+      {{
+          "task_title": string,
+          "description": string,
+          "due_date": string,
+          "requestor": string,
+          "completion_status": integer (1 if the task is mentioned as complete, 0 if it is not)
+      }}
+      
+      --------------------------------------------------
+      # Examples of how to extract tasks:
+      --------------------------------------------------
+      **Example 1: Clear Task with Date**
+
+      *Email:*
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: Report
+      body: Hi {user_name}, could you send me the Q3 report by Friday?
+
+      JSON:
+      [
+        {{
+          "task_title": "Send Q3 report",
+          "description": "Send the Q3 report to Priya.",
+          "due_date": "2025-07-25",
+          "requestor": "Priya",
+          "completion_status": 0
+        }}
+      ]
+      --------------------------------------------------
+      **Example 2: Self-Sent Reminder (No Date)**
+
+      *Email:*
+      from: {user_name} <{user_id}>
+      to: {user_name} <{user_id}>
+      subject: Reminder
+      body: Don't forget to submit the expense report for the conference.
+
+      JSON:
+      [
+        {{
+          "task_title": "Submit expense report for the conference",
+          "description": "Submit the expense report for the conference.",
+          "due_date": null,
+          "requestor": "{user_name}",
+          "completion_status": 0
+        }}
+      ]
+      --------------------------------------------------
+      **Example 3: Multiple Distinct Tasks**
+
+      *Email:*
+      from: Priya <p.patel@example.com>
+      to: {user_name} <{user_id}>
+      subject: Weekly Update
+      body: Hey {user_name}, can you please send me the weekly update before before our call with Acme Corp.? Also, don't forget to book the conference room for Friday's meeting.
+
+      JSON:
+      [
+        {{
+          "task_title": "Send weekly update",
+          "description": "Send the weekly update to Priya.",
+          "due_date": "before our call with Acme Corp.",
+          "requestor": "Priya",
+          "completion_status": 0
+        }},
+        {{
+          "task_title": "Book conference room",
+          "description": "Book the conference room for Friday's meeting.",
+          "due_date": "2025-07-25",
+          "requestor": "Priya",
+          "completion_status": 0
+        }}
+      ]
+      --------------------------------------------------
+      **Example 4: One Task with Multiple Related Steps**
+
+      *Email:*
+      from: Sarah <s.johnson@example.com>
+      to: {user_name} <{user_id}>
+      subject: Presentation Updates Needed
+      body: Hi {user_name}, can you please update the quarterly presentation before our client meeting on Thursday? 
+      Specifically: 
+      1) Add the new revenue figures from Q3, 
+      2) Update the team photos on slide 5, 
+      3) Fix the typo on slide 12 where it says "revenus" instead of "revenue", and 
+      4) Add the new competitive analysis chart to slide 8. Thanks!
+
+      JSON:
+      [
+        {{
+          "task_title": "Update quarterly presentation",
+          "description": "Update the quarterly presentation with: 1) Add new Q3 revenue figures, 2) Update team photos on slide 5, 3) Fix typo on slide 12 ('revenus' -> 'revenue'), 4) Add competitive analysis chart to slide 8",
+          "due_date": "before our client meeting on Thursday",
+          "requestor": "Sarah",
+          "completion_status": 0
+        }}
+      ]
+      --------------------------------------------------
+      **Example 5: Multiple Distinct Independent Tasks**
+
+      *Email:*
+      from: Sarah <s.johnson@example.com>
+      to: {user_name} <{user_id}>
+      subject: End of Quarter Tasks
+      body: Hi {user_name}, before the quarter ends, can you: 
+      1) Submit your expense report to accounting, 
+      2) Update the quarterly presentation for our client meeting, and 
+      3) Schedule a team meeting for next month to discuss the new project timeline? 
+      
+      Each of these has different deadlines and stakeholders. Thanks!
+
+      JSON:
+      [
+        {{
+          "task_title": "Submit expense report",
+          "description": "Submit expense report to accounting before quarter end",
+          "due_date": "before the quarter ends",
+          "requestor": "Sarah",
+          "completion_status": 0
+        }},
+        {{
+          "task_title": "Update quarterly presentation",
+          "description": "Update the quarterly presentation for client meeting",
+          "due_date": "before the quarter ends",
+          "requestor": "Sarah",
+          "completion_status": 0
+        }},
+        {{
+          "task_title": "Schedule team meeting",
+          "description": "Schedule a team meeting for next month to discuss new project timeline",
+          "due_date": "before the quarter ends",
+          "requestor": "Sarah",
+          "completion_status": 0
+        }}
+      ]
+      --------------------------------------------------
+      # End examples
+      --------------------------------------------------
+      Now, using the rules and examples above, extract all actionable tasks for user '{user_name}' (email: {user_id}) from the "Primary Email" below. 
+      Use the "Related Conversation" history for additional context.
+
+      **Instructions:**
+      - A task is believed to be present. Your goal is to extract it.
+      - the requestor and the owner can be the same person such as self reminders or self tasks.
+      - **Combine multiple related steps about a single deliverable into one task. Create separate tasks only for distinct, independent action items.**
+      - **IMPORTANT**: For the 'due_date', if a specific date is mentioned (e.g., "by Friday", "June 11th"), convert it to "YYYY-MM-DD" format. If the deadline is relative to an event (e.g., "before the meeting"), use that text directly. If no deadline is mentioned, return null.
+      - If, after careful analysis, you are absolutely certain there is no task for this user, you may return an empty list: [].
+      - Use information from Related Conversation if they provide relevant context, or ignore them if they do not provide relevant context.
+      - Always return the output as a JSON array (list) of tasks.
+
+    user_message: |
+      ### Primary Email to Analyze:
+      {email_contents}
+
+      ### Related Conversation History
+      {retrieved_context}
+
+      JSON:
+    version: v1.0
+# --------------------------------------------------
+
+# ----Retrieval Context Filter Prompts----
+retrieval_filter:
+  production_baseline:
+    author: TaskMiner Team
+    created_date: '2025-07-29'
+    description: Determines if a retrieved email's context is useful for extracting tasks from a primary email.
+    system_message: |
+      You are an expert assistant specializing in analyzing email conversations.
+      Your goal is to determine if a retrieved email provides necessary and helpful context
+      to understand the tasks in a primary email. Respond with "TRUE" if the context is
+      helpful and necessary, and "FALSE" otherwise. Only provide the boolean value.
+    user_message: |
+      Primary Email:
+      {primary_email}
+
+      Retrieved Email Chain:
+      {retrieved_email}
+
+      Is the "Retrieved Email Chain" helpful and necessary to understand the tasks in the "Primary Email"?
+    version: v1.0
